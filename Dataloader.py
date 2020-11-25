@@ -18,11 +18,12 @@ from utility.csvdumpload import CSVDumpLoad
 class DataReader(CSVDumpLoad):
     def __init__(self):
         #TODO: Write a function that initializes the class
-        self.tf_record_file = "./test/data/training_segment-10017090168044687777_6380_000_6400_000_with_camera_labels.tfrecord"
+        self.tf_record_file = "./test/data/training_segment-10226164909075980558_180_000_200_000_with_camera_labels.tfrecord"
         
         
-        datafolder = os.path.abspath(os.path.join(os.path.dirname(__file__), './data/temp/'))
-        cols = ["frame_id","bd_id", "bd_type","center_x","center_y","center_z","heading","speed_x","speed_y","u","v", "img_path"]
+        datafolder = os.path.abspath(os.path.join(os.path.dirname(__file__), './data/temp/{}'.format(os.path.basename(self.tf_record_file).split(".")[0])))
+        cols = ["frame_id","bd_id", "bd_type","center_x","center_y","center_z","heading",
+                "rel_center_x","rel_center_y","rel_center_z","rel_heading","speed_x","speed_y","u","v", "img_path"]
         CSVDumpLoad.__init__(self, "trj_ground_truth", datafolder, cols)
         np.set_printoptions(suppress=True)
         
@@ -37,7 +38,7 @@ class DataReader(CSVDumpLoad):
                     u,v = label.box.center_x, label.box.center_y 
                     break 
         img = None
-        fname = "./data/temp/{}_front.jpg".format(frame.timestamp_micros)
+        fname = "{}/{}_front.jpg".format(self.datafolder, frame.timestamp_micros)
         if os.path.exists(fname):
             return u,v, fname
         for image in frame.images:
@@ -52,6 +53,9 @@ class DataReader(CSVDumpLoad):
     def parse_frame(self, frame):
 #         print(frame)
         frame_id = frame.timestamp_micros
+        if frame_id < 1546479695312889:
+            #extract about 5 seconds appropriatge segment only
+            return
         TWV = np.array(frame.pose.transform).reshape(4,4)
         TWV = PoseInfo().construct_fromT(TWV)
         
@@ -60,11 +64,18 @@ class DataReader(CSVDumpLoad):
             center_y = bd.box.center_y
             center_z = bd.box.center_z
             heading = bd.box.heading
+            
+            rel_center_x = center_x
+            rel_center_y = center_y
+            rel_center_z = center_z
+            rel_heading = heading
+            
             speed_x = bd.metadata.speed_x
             speed_y = bd.metadata.speed_y
             bd_id = bd.id
             bd_type = bd.type
             u,v,img_path = self.get_corresponding_camera_box(bd_id, frame)
+            #object pose in vehicle frame
             TVO = PoseInfo().construct_fromyprt(ypr = [heading, 0, 0], t= [center_x, center_y, center_z], use_angle = False)
             #get object pose in world frame
             TWO = TWV * TVO
@@ -92,6 +103,7 @@ class DataReader(CSVDumpLoad):
         return
     def run(self):
         self.parse()
+        print("done with dataset setup")
         return
     
 if __name__ == "__main__":
