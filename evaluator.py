@@ -17,10 +17,8 @@ class Evaluator():
     def __init__(self):
         #load dataset, mainly ground truth info
         self.gt_df =  DataReader().load()
-        self.selected_objids = [0, 8, 5, 15, 20, 13]
-        self.selected_objids = [0, 20, 13]
-#         self.selected_objids = [15]
-        
+        self.selected_objids = np.arange(100)
+        self.selected_objids = [14, 17, 0, 20]
         return
           
     def evaluate(self):
@@ -67,15 +65,16 @@ class Evaluator():
         fig.suptitle('Image and trajectory predciton')
         ax1.imshow(img)  
         for ind, (objid, xyzvels) in enumerate(obj_xyzs.items()):
-
-            dim_x, dim_y,u,v = xyzvels.iloc[-1][['dim_x', 'dim_y', 'u', 'v']]
-            rect = patches.Rectangle((u-dim_x/2.0,v-dim_y/2.0),dim_x,dim_y,linewidth=1,edgecolor='r',facecolor='none')
-            ax1.add_patch(rect)
-            print("u={}, v= {}, dim_x={}, dim_y = {}".format(u, v, dim_x, dim_y))
+            c = np.random.rand(3,)
+            dim_x, dim_y,u,v = xyzvels.iloc[0][['dim_x', 'dim_y', 'u', 'v']]
+#             rect = patches.Rectangle((u-dim_x/2.0,v-dim_y/2.0),dim_x,dim_y,linewidth=1,edgecolor='r',facecolor='none')
+#             ax1.add_patch(rect)
+            ax1.annotate('{}'.format(ind), xy=[u, v], color = c, fontsize= 15)
+            print("objectid = {}, u={}, v= {}, dim_x={}, dim_y = {}".format(objid, u, v, dim_x, dim_y))
 
 #             img = self.annotate_img(img, dim_x, dim_y, u, v)
             
-            c = np.random.rand(3,)
+            
             ax2.plot(xyzvels.center_x, xyzvels.center_y, label='{}'.format(ind), color = c)
             ax2.annotate('{}'.format(ind), xy=xyzvels.iloc[-1][['center_x', 'center_y']], color = c)
             
@@ -123,8 +122,9 @@ class Evaluator():
             else:
                 ax = axs[ind]
             ax.plot(res[:, 0], res[:, 1])
-            ax.set_xlabel("time")
-            ax.set_ylabel("rmse error")
+        plt.xlabel("Time")
+        plt.ylabel("RMSE")
+        fig.suptitle('RMSE for different objects')
             
         
         
@@ -135,7 +135,7 @@ class Evaluator():
         self.obj_xys_pred = pred.predict(self.obj_xyzs)
         
         self.visualizer()
-#         self.plot_RSME()
+        self.plot_RSME()
         
         plt.show()
         return

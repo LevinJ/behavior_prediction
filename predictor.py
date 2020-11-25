@@ -7,14 +7,6 @@ import numpy as np
 
 class Predictor():
     def __init__(self):
-        #TODO: Write a function that does initialization
-#         self.tf_record_file = "./test/data/training_segment-10226164909075980558_180_000_200_000_with_camera_labels.tfrecord"
-#         
-#         
-#         datafolder = os.path.abspath(os.path.join(os.path.dirname(__file__), './data/temp/{}'.format(os.path.basename(self.tf_record_file).split(".")[0])))
-#         cols = ["frame_id","bd_id", "bd_type","center_x","center_y"]
-#         CSVDumpLoad.__init__(self, "trj_prediction", datafolder, cols)
-#         np.set_printoptions(suppress=True)
         return
         
     def predict(self, obj_xyzvels):
@@ -30,10 +22,6 @@ class Predictor():
             res[bd_id] = pred_xys
         return res
     
-#     def get_obj_list(self):
-#         evl = Evaluator()
-#         obj_xyzvels = evl.get_gttrj()
-#         return obj_xyzvels
     
     def run(self):
         obj_xyzvels = self.get_obj_list()
