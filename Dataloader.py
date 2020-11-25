@@ -23,7 +23,7 @@ class DataReader(CSVDumpLoad):
         
         datafolder = os.path.abspath(os.path.join(os.path.dirname(__file__), './data/temp/{}'.format(os.path.basename(self.tf_record_file).split(".")[0])))
         cols = ["frame_id","bd_id", "bd_type","center_x","center_y","center_z","heading",
-                "rel_center_x","rel_center_y","rel_center_z","rel_heading","speed_x","speed_y","u","v", "img_path"]
+                "rel_center_x","rel_center_y","rel_center_z","rel_heading","speed_x","speed_y","u","v", "dim_x", "dim_y","img_path"]
         CSVDumpLoad.__init__(self, "trj_ground_truth", datafolder, cols)
         np.set_printoptions(suppress=True)
         
@@ -33,14 +33,16 @@ class DataReader(CSVDumpLoad):
             if bd.name != 1:
                 break
             u,v = None, None
+            dim_x, dim_y = None, None
             for label in bd.labels:
                 if laser_bd_id in label.id:
                     u,v = label.box.center_x, label.box.center_y 
+                    dim_x, dim_y = label.box.length, label.box.width
                     break 
         img = None
         fname = "{}/{}_front.jpg".format(self.datafolder, frame.timestamp_micros)
         if os.path.exists(fname):
-            return u,v, fname
+            return u,v, fname, dim_x, dim_y
         for image in frame.images:
             if image.name == 1:
                 img = tf.image.decode_jpeg(image.image)
@@ -49,7 +51,7 @@ class DataReader(CSVDumpLoad):
                 print("saved file {}".format(fname))
                 break           
                 
-        return u,v, fname
+        return u,v, fname, dim_x, dim_y
     def parse_frame(self, frame):
 #         print(frame)
         frame_id = frame.timestamp_micros
@@ -74,7 +76,7 @@ class DataReader(CSVDumpLoad):
             speed_y = bd.metadata.speed_y
             bd_id = bd.id
             bd_type = bd.type
-            u,v,img_path = self.get_corresponding_camera_box(bd_id, frame)
+            u,v,img_path, dim_x, dim_y = self.get_corresponding_camera_box(bd_id, frame)
             #object pose in vehicle frame
             TVO = PoseInfo().construct_fromyprt(ypr = [heading, 0, 0], t= [center_x, center_y, center_z], use_angle = False)
             #get object pose in world frame

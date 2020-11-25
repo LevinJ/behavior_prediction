@@ -11,6 +11,7 @@ from utility.csvdumpload import CSVDumpLoad
 from Dataloader import DataReader
 import matplotlib.pyplot as plt
 from predictor import Predictor
+import matplotlib.patches as patches
 
 class Evaluator():
     def __init__(self):
@@ -42,7 +43,7 @@ class Evaluator():
         
         for objectid in visible_objectids:
             objectid_df = self.gt_df[self.gt_df["bd_id"] == objectid]
-            res[objectid] = objectid_df[["center_x","center_y","center_z", "speed_x", "speed_y", "bd_type", "frame_id"]]
+            res[objectid] = objectid_df[["center_x","center_y","center_z", "speed_x", "speed_y", "bd_type", "frame_id", "dim_x", "dim_y",'u', 'v']]
         
         filtered_res = {}
         for ind, (objid, xyzvels) in enumerate(res.items()):
@@ -50,6 +51,9 @@ class Evaluator():
                 filtered_res[objid] = xyzvels
                 continue
         return filtered_res
+#     def annotate_img(self, img, dim_x, dim_y,u,v ):
+#         mpimg.
+#         return img
         
 
     def visualizer(self):
@@ -61,12 +65,16 @@ class Evaluator():
         
         fig, (ax1, ax2) = plt.subplots(1, 2)
         fig.suptitle('Image and trajectory predciton')
-        ax1.imshow(img)
+        ax1.imshow(img)  
         for ind, (objid, xyzvels) in enumerate(obj_xyzs.items()):
-#             if ind <=10:
-#                 continue
-#             if not ind in self.selected_objids:
-#                 continue
+
+            dim_x, dim_y,u,v = xyzvels.iloc[-1][['dim_x', 'dim_y', 'u', 'v']]
+            rect = patches.Rectangle((u-dim_x/2.0,v-dim_y/2.0),dim_x,dim_y,linewidth=1,edgecolor='r',facecolor='none')
+            ax1.add_patch(rect)
+            print("u={}, v= {}, dim_x={}, dim_y = {}".format(u, v, dim_x, dim_y))
+
+#             img = self.annotate_img(img, dim_x, dim_y, u, v)
+            
             c = np.random.rand(3,)
             ax2.plot(xyzvels.center_x, xyzvels.center_y, label='{}'.format(ind), color = c)
             ax2.annotate('{}'.format(ind), xy=xyzvels.iloc[-1][['center_x', 'center_y']], color = c)
@@ -74,7 +82,7 @@ class Evaluator():
             ax2.plot(obj_xys_pred[objid][:, 0],obj_xys_pred[objid][:, 1], label='{}_pred'.format(ind), color = c)
             ax2.annotate('{}_pred'.format(ind), xy=obj_xys_pred[objid][-1][:2], color = c)
             
-            
+          
 #             break
         plt.legend()
 #         plt.xlabel('X')
@@ -127,7 +135,7 @@ class Evaluator():
         self.obj_xys_pred = pred.predict(self.obj_xyzs)
         
         self.visualizer()
-        self.plot_RSME()
+#         self.plot_RSME()
         
         plt.show()
         return
